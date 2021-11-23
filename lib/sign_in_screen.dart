@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:photo_app/photo_list_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   @override
@@ -104,6 +105,13 @@ class _SignInScreenState extends State<SignInScreen> {
       // エラーメッセージがあるため処理を中断する
       return;
     }
+
+    // 画像一覧画面に切り替え
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => PhotoListScreen(),
+      ),
+    );
   }
 
   void _onSignUp() {
@@ -112,6 +120,13 @@ class _SignInScreenState extends State<SignInScreen> {
       // エラーメッセージがあるため処理を中断する
       return;
     }
+
+    // 画像一覧画面に切り替え
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => PhotoListScreen(),
+      ),
+    );
   }
 
 }
