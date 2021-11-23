@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "366096694688",
+    "project_id": "photo-app-40909",
+    "storage_bucket": "photo-app-40909.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366096694688:android:9d50c2985ba7337d0d38c5",
+        "android_client_info": {
+          "package_name": "page.okto.photoapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "366096694688-6hk53dl782fj8lumr3m0lctca4aad50m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBn7ATo9Gr2UzdpM8z7fBCXAvCo0bpnq6s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366096694688-6hk53dl782fj8lumr3m0lctca4aad50m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

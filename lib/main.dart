@@ -1,7 +1,17 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_app/sign_in_screen.dart';
 
-void main() {
+void main() async {
+  // Flutterの初期化処理を待つ
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // アプリ起動前にFirebase初期化処理を入れる
+  // initializeApp()の返り値がFutureなので非同期処理
+  // 非同期処理(Future)はawaitで処理が終わるのを待つことができる
+  // ただし、awaitを使うときは関数にasyncを付ける必要がある
+  await Firebase.initializeApp();
+
   runApp(MyApp());
 }
 
