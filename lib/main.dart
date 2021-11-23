@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:photo_app/photo_list_screen.dart';
 import 'package:photo_app/sign_in_screen.dart';
 
 void main() async {
@@ -25,8 +27,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // アプリ起動時にログイン画面を表示
-      home: SignInScreen(),
+      // ログイン状態に応じて表示する画面を切り替える
+      home: FirebaseAuth.instance.currentUser == null ? SignInScreen() : PhotoListScreen(),
     );
   }
 }
