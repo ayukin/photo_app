@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:photo_app/photo_view_screen.dart';
 
 class PhotoListScreen extends StatefulWidget {
   @override
@@ -42,10 +43,16 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
 
         children: [
           // 「全ての画像」を表示する部分
-          PhotoGridView(),
+          PhotoGridView(
+            // コールバックを設定しタップした画像のURLを受け取る
+            onTap: (imageURL) => _onTapPhoto(imageURL),
+          ),
 
           // 「お気に入り登録した画像」を表示する部分
-          PhotoGridView(),
+          PhotoGridView(
+            // コールバックを設定しタップした画像のURLを受け取る
+            onTap: (imageURL) => _onTapPhoto(imageURL),
+          ),
 
         ],
       ),
@@ -90,7 +97,6 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
   }
 
   void _onTapBottomNavigationItem(int index) {
-
     // PageViewで表示するWidgetを切り替える
     _controller.animateToPage(
 
@@ -110,12 +116,30 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
     setState(() {
       _currentIndex = index;
     });
+  }
 
+  void _onTapPhoto(String imageURL) {
+    // 最初に表示する画像のURLを指定して、画像詳細画面に切り替える
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PhotoViewScreen(imageURL: imageURL),
+      ),
+    );
   }
 
 }
 
 class PhotoGridView extends StatelessWidget {
+
+  const PhotoGridView({
+    Key? key,
+    required this.onTap,
+  }) : super(key: key);
+
+  // コールバックからタップされた画像のURLを受け渡す
+  final void Function(String imageURL) onTap;
+
+
   @override
   Widget build(BuildContext context) {
     // ダミー画像一覧
