@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:photo_app/photo.dart';
 
 class PhotoViewScreen extends StatefulWidget {
   const PhotoViewScreen({
     Key? key,
-    // requiredをつけると必須パレメータと言う意味になる
-    required this.imageURL,
-    // 引数から画像のURL一覧を受け取る
-    required this.imageList,
+    required this.photo,
+    required this.photoList,
   }) : super(key: key);
 
-  // 最初に表示するURLを受け取る
-  final String imageURL;
-  final List<String> imageList;
+  final Photo photo;
+  final List<Photo> photoList;
 
   @override
   _PhotoViewScreenState createState() => _PhotoViewScreenState();
@@ -25,8 +23,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
   void initState() {
     super.initState();
 
-    // 受け取った画像一覧から、ページ番号を指定
-    final int initialPage = widget.imageList.indexOf(widget.imageURL);
+    final int initialPage = widget.photoList.indexOf(widget.photo);
     _controller = PageController(
       initialPage: initialPage,
     );
@@ -49,9 +46,9 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
             controller: _controller,
             onPageChanged: (int index) => {},
             // 受け取った画像一覧を表示
-            children: widget.imageList.map((String imageURL) {
+            children: widget.photoList.map((Photo photo) {
               return Image.network(
-                imageURL,
+                photo.imageURL,
                 fit: BoxFit.cover,
               );
             }).toList(),
