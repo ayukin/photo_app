@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_app/photo.dart';
 import 'package:photo_app/photo_repository.dart';
 import 'package:photo_app/photo_view_screen.dart';
+import 'package:photo_app/providers.dart';
 import 'package:photo_app/sign_in_screen.dart';
 
 class PhotoListScreen extends StatefulWidget {
@@ -14,19 +16,15 @@ class PhotoListScreen extends StatefulWidget {
 }
 
 class _PhotoListScreenState extends State<PhotoListScreen> {
-
-  late int _currentIndex;
   late PageController _controller;
 
   @override
   void initState() {
     super.initState();
 
-    // PageViewで表示されているWidgetの番号を持っておく
-    _currentIndex = 0;
-
-    // PageViewの表示を切り替えるのに使う
-    _controller = PageController(initialPage: _currentIndex);
+    _controller = PageController(
+      initialPage: context.read(photoListIndexProvider).state,
+    );
 
   }
 
@@ -46,44 +44,60 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<Photo>>(
-        // CloudFirestoreからデータを取得
-        stream: PhotoRepository(user).getPhotoList(),
-        builder: (context, snapshot) {
-          // CloudFirestoreからデータを取得中の場合
-          if (snapshot.hasData == false) {
-            return Center(
-              child: CircularProgressIndicator(),
+      body: PageView(
+        controller: _controller,
+        onPageChanged: (int index) => _onPageChanged(index),
+        children: [
+          // 「全ての画像」を表示する部分
+          Consumer(builder: (context, watch, child) {
+            // 「全ての画像」を表示する部分
+            final asyncPhotoList = watch(photoListProvider);
+            return asyncPhotoList.when(
+              data: (List<Photo> photoList) {
+                return PhotoGridView(
+                  photoList: photoList,
+                  onTap: (photo) => _onTapPhoto(photo, photoList),
+                  onTapFav: (photo) => _onTapFav(photo),
+                );
+              },
+              loading: () {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+              error: (e, stackTrace) {
+                return Center(
+                  child: Text(e.toString()),
+                );
+              },
             );
-          }
+          }),
 
-          final List<Photo> photoList = snapshot.data!;
-
-          return PageView(
-            controller: _controller,
-            // 表示が切り替わった時
-            onPageChanged: (int index) => _onPageChanged(index),
-
-            children: [
-              // 「全ての画像」を表示する部分
-              PhotoGridView(
-                // Cloud Firestoreから取得した画像のURL一覧を渡す
-                photoList: photoList,
-                // コールバックを設定しタップした画像のURLを受け取る
-                onTap: (photo) => _onTapPhoto(photo, photoList),
-              ),
-
-              // 「お気に入り登録した画像」を表示する部分
-              PhotoGridView(
-                // お気に入り登録した画像は、後ほど実装
-                photoList: photoList,
-                // コールバックを設定しタップした画像のURLを受け取る
-                onTap: (photo) => _onTapPhoto(photo, photoList),
-              ),
-
-            ],
-          );
-        },
+          //「お気に入り登録した画像」を表示する部分
+          Consumer(builder: (context, watch, child) {
+            // 画像データ一覧を受け取る
+            final asyncPhotoList = watch(photoListProvider);
+            return asyncPhotoList.when(
+              data: (List<Photo> photoList) {
+                return PhotoGridView(
+                  photoList: photoList,
+                  onTap: (photo) => _onTapPhoto(photo, photoList),
+                  onTapFav: (photo) => _onTapFav(photo),
+                );
+              },
+              loading: () {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+              error: (e, stackTrace) {
+                return Center(
+                  child: Text(e.toString()),
+                );
+              },
+            );
+          }),
+        ],
       ),
 
       // 画像追加ボタン
@@ -93,67 +107,62 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
       ),
 
       // 画面下部のボタン部分
-      bottomNavigationBar: BottomNavigationBar(
-        // BottomNavigationBarItemがタップされたときの処理
-        // ０：フォト
-        // １：お気に入り
-        onTap: (int index) => _onTapBottomNavigationItem(index),
+      bottomNavigationBar: Consumer(
+        builder: (context, watch, child) {
+          // 現在のページを受け取る
+          final photoIndex = watch(photoListIndexProvider).state;
 
-        // 現在表示されているBottomNavigationBarItemの番号
-        // ０：フォト
-        // １：お気に入り
-        currentIndex: _currentIndex,
+          return BottomNavigationBar(
+            onTap: (int index) => _onTapBottomNavigationItem(index),
 
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.image),
-            label: "フォト",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: "お気に入り",
-          ),
-        ],
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.image),
+                label: "フォト",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.favorite),
+                label: "お気に入り",
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   void _onPageChanged(int index) {
-    // PageViewで表示されているWidgetの番号を更新
-    setState(() {
-      _currentIndex = index;
-    });
+    // ページの値を更新する
+    context.read(photoListIndexProvider).state = index;
   }
 
   void _onTapBottomNavigationItem(int index) {
     // PageViewで表示するWidgetを切り替える
     _controller.animateToPage(
-
-      // 表示するWidgetの番号
-      // ０：フォト
-      // １：お気に入り
       index,
-
       // 表示を切り替えると時にかかる時間（300ミリ秒）
       duration: Duration(milliseconds: 300),
-
       // アニメーションの動き方
       curve: Curves.easeIn,
     );
 
-    // PageViewで表示されているWidgetの番号を更新
-    setState(() {
-      _currentIndex = index;
-    });
+    // ページの値を更新する
+    context.read(photoListIndexProvider).state = index;
   }
 
   void _onTapPhoto(Photo photo, List<Photo> photoList) {
-    // 最初に表示する画像のURLを指定して、画像詳細画面に切り替える
+    final initialIndex = photoList.indexOf(photo);
+
+
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PhotoViewScreen(
-          photo: photo,
-          photoList: photoList,
+        // ProviderScopeを使いScopedProviderの値を上書きできる
+        // ここでは、最初に表示する画像の番号を指定
+        builder: (_) => ProviderScope(
+          overrides: [
+            photoViewInitialIndexProvider.overrideWithValue(initialIndex)
+          ],
+          child: PhotoViewScreen(),
         ),
       ),
     );
@@ -189,6 +198,12 @@ class _PhotoListScreenState extends State<PhotoListScreen> {
     }
   }
 
+  Future<void> _onTapFav(Photo photo) async {
+    final photoRepository = context.read(photoRepositoryProvider);
+    final togledPhoto = photo.togleIsFavorite();
+    await photoRepository!.updatePhoto(togledPhoto);
+  }
+
 }
 
 class PhotoGridView extends StatelessWidget {
@@ -198,12 +213,14 @@ class PhotoGridView extends StatelessWidget {
     // 引数から画像のURL一覧を受け取る
     required this.photoList,
     required this.onTap,
+    required this.onTapFav,
+
   }) : super(key: key);
 
   // コールバックからタップされた画像のURLを受け渡す
   final List<Photo> photoList;
-  final Function(Photo photo) onTap;
-
+  final void Function(Photo photo) onTap;
+  final void Function(Photo photo) onTapFav;
 
   @override
   Widget build(BuildContext context) {
@@ -246,9 +263,13 @@ class PhotoGridView extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                onPressed: () => {},
+                onPressed: () => onTapFav(photo),
                 color: Colors.white,
-                icon: Icon(Icons.favorite_border),
+                icon: Icon(
+                  photo.isFavorite == true
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                ),
               ),
             ),
           ],

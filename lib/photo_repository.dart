@@ -64,5 +64,22 @@ class PhotoRepository {
     };
   }
 
+  Future<void> deletePhoto(Photo photo) async {
+    // CloudFirestoreのデータを削除
+    await FirebaseFirestore.instance
+        .collection("users/${user.uid}/photos")
+        .doc(photo.id)
+        .delete();
+    // Storageの画像ファイルを削除
+    await FirebaseStorage.instance.ref().child(photo.imagePath).delete();
+  }
+
+  Future<void> updatePhoto(Photo photo) async {
+    // お気に入り登録状況のデータを更新
+    await FirebaseFirestore.instance
+        .collection("users/${user.uid}/photos")
+        .doc(photo.id)
+        .update(_photoToMap(photo));
+  }
 
 }
