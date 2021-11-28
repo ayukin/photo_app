@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:photo_app/photo.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:photo_app/providers.dart';
+import 'package:share/share.dart';
 
 class PhotoViewScreen extends StatefulWidget {
-  const PhotoViewScreen({
-    Key? key,
-    required this.photo,
-    required this.photoList,
-  }) : super(key: key);
-
-  final Photo photo;
-  final List<Photo> photoList;
 
   @override
   _PhotoViewScreenState createState() => _PhotoViewScreenState();
@@ -23,9 +18,8 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
   void initState() {
     super.initState();
 
-    final int initialPage = widget.photoList.indexOf(widget.photo);
     _controller = PageController(
-      initialPage: initialPage,
+      initialPage: context.read(photoViewInitialIndexProvider),
     );
   }
 
@@ -41,18 +35,35 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
       ),
       body: Stack(
         children: [
-          // 画像一覧
-          PageView(
-            controller: _controller,
-            onPageChanged: (int index) => {},
-            // 受け取った画像一覧を表示
-            children: widget.photoList.map((Photo photo) {
-              return Image.network(
-                photo.imageURL,
-                fit: BoxFit.cover,
-              );
-            }).toList(),
-          ),
+          Consumer(builder: (context, watch, child) {
+            final asyncPhotoList = watch(photoListProvider);
+
+            return asyncPhotoList.when(
+              data: (photoList) {
+                return PageView(
+                  controller: _controller,
+                  onPageChanged: (int index) => {},
+                  // 受け取った画像一覧を表示
+                  children: photoList.map((Photo photo) {
+                    return Image.network(
+                      photo.imageURL,
+                      fit: BoxFit.cover,
+                    );
+                  }).toList(),
+                );
+              },
+              loading: () {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+              error: (e, stackTrace) {
+                return Center(
+                  child: Text(e.toString()),
+                );
+              },
+            );
+          }),
 
           // アイコンボタンを画像の手前に重ねる
           Align(
@@ -78,14 +89,14 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                 children: [
                   // 共有ボタン
                   IconButton(
-                    onPressed: () => {},
+                    onPressed: () => _onTapShare(),
                     color: Colors.white,
                     icon: Icon(Icons.share),
                   ),
 
                   // 削除ボタン
                   IconButton(
-                    onPressed: () => {},
+                    onPressed: () => _onTapDelete(),
                     color: Colors.white,
                     icon: Icon(Icons.delete),
                   ),
@@ -97,4 +108,30 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
       ),
     );
   }
+
+  Future<void> _onTapDelete() async {
+    final photoRepository = context.read(photoRepositoryProvider);
+    final photoList = context.read(photoListProvider).data!.value;
+    final photo = photoList[_controller.page!.toInt()];
+
+    if (photoList.length == 1) {
+      Navigator.of(context).pop();
+    } else if (photoList.last == photo) {
+      await _controller.previousPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+    await photoRepository!.deletePhoto(photo);
+  }
+
+  Future<void> _onTapShare() async {
+    final photoList = context.read(photoListProvider).data!.value;
+    final photo = photoList[_controller.page!.toInt()];
+
+    // 画像URLを共有
+    await Share.share(photo.imageURL);
+  }
+
+
 }

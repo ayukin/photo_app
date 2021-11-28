@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_app/photo_list_screen.dart';
+import 'package:photo_app/providers.dart';
 import 'package:photo_app/sign_in_screen.dart';
 
 void main() async {
@@ -14,11 +16,15 @@ void main() async {
   // ただし、awaitを使うときは関数にasyncを付ける必要がある
   await Firebase.initializeApp();
 
-  runApp(MyApp());
+  runApp(
+    // Providerで定義したデータを渡せるようにする
+    ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  // const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +33,31 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // ログイン状態に応じて表示する画面を切り替える
-      home: FirebaseAuth.instance.currentUser == null ? SignInScreen() : PhotoListScreen(),
+      // Consumerを使うことでもデータを受け取れる
+      home: Consumer(builder: (context, watch, child) {
+        // ユーザー情報を取得
+        final asyncUser = watch(userProvider);
+
+        return asyncUser.when(
+          data: (User? data) {
+            return data == null ? SignInScreen() : PhotoListScreen();
+          },
+          loading: () {
+            return Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          },
+          error: (e, stackTrace) {
+            return Scaffold(
+              body: Center(
+                child: Text(e.toString()),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }
