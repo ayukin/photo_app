@@ -80,7 +80,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                     Colors.black.withOpacity(0.5),
                     Colors.transparent,
                   ],
-                  stops: [0.0, 0.1],
+                  stops: [0.0, 1.0],
                 ),
               ),
 
