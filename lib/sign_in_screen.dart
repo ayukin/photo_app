@@ -8,95 +8,84 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-
-  // Formのkeyを指定する場合は<FormState>としてGlobalKeyを定義する
+  // バリデーション処理を行うために必要なもの
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // メールアドレス用のTextEditingController
-  final TextEditingController _emailController = TextEditingController();
-  // パスワード用のTextEditingController
-  final TextEditingController _passwordController = TextEditingController();
+  // TextFormFieldの入力内容を参照したり制御したりできる
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 変数を初期化する
+    //   - Widgetが作成された初回のみ動作させたい処理はinitState()に記述する
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Form(
-        // Formのkeyに指定する
-        key: _formKey,
-
+        key: _formKey, // Formのkeyに指定する
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            // Columnを使い縦に並べる
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Photo App",
-                  style: Theme.of(context).textTheme.headline4,
+                  'Photo App',
+                  style: TextStyle(fontSize: 24),
                 ),
-
                 SizedBox(height: 16),
-
-                // 入力フォーム（メールアドレス）
                 TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: "メールアドレス"),
+                  decoration: InputDecoration(
+                    labelText: 'メールアドレス',
+                  ),
                   keyboardType: TextInputType.emailAddress,
-
-                  // メールアドレス用のバリデーション
                   validator: (String? value) {
-                    // メールアドレスが入力されていない場合
                     if (value?.isEmpty == true) {
-                      // 問題がある時はメッセージを返す
-                      return "メールアドレスを入力して下さい";
+                      // 問題があるときはメッセージを返す
+                      return 'メールアドレスを入力して下さい';
                     }
-                    // 問題がない時はnullを返す
+                    // 問題ないときはnullを返す
                     return null;
                   },
-
                 ),
-
-                SizedBox(height: 8),
-
-                // 入力フォーム（パスワード）
+                SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: "パスワード"),
+                  decoration: InputDecoration(
+                    labelText: 'パスワード',
+                  ),
                   keyboardType: TextInputType.visiblePassword,
-                  obscureText: true,
-
-                  // パスワード用のバリデーション
                   validator: (String? value) {
-                    // パスワードが入力されていない場合
                     if (value?.isEmpty == true) {
-                      // 問題がある時はメッセージを返す
-                      return "パスワードを入力して下さい";
+                      return 'パスワードを入力して下さい';
                     }
-                    // 問題がない時はnullを返す
                     return null;
                   },
                 ),
-
                 SizedBox(height: 16),
-
-                SizedBox(
+                Container(
                   width: double.infinity,
-                  // ボタン（ログイン）
                   child: ElevatedButton(
-                    onPressed: () => _onSignIn(),
-                    child: Text("ログイン"),
+                    onPressed: () => _onSignIn(context),
+                    child: Text('ログイン'),
                   ),
                 ),
-
-                SizedBox(height: 8),
-
-                SizedBox(
+                SizedBox(height: 16),
+                Container(
                   width: double.infinity,
-                  // ボタン（新規登録）
                   child: ElevatedButton(
-                    onPressed: () => _onSignUp(),
-                    child: Text("新規登録"),
+                    onPressed: () => _onSignUp(context),
+                    child: Text('新規登録'),
                   ),
                 ),
               ],
@@ -107,84 +96,66 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Future<void> _onSignIn() async {
-
+  Future<void> _onSignIn(BuildContext context) async {
     try {
-      // 入力内容を確認する
       if (_formKey.currentState?.validate() != true) {
-        // エラーメッセージがあるため処理を中断する
         return;
       }
 
-      // 新規登録と同じく入力された内容をもとにログイン処理を行う
       final String email = _emailController.text;
       final String password = _passwordController.text;
-      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => PhotoListScreen(),
         ),
       );
-      print("ログイン成功");
     } catch (e) {
-      // 失敗したらエラーメッセージを表示
       await showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("エラー"),
+            title: Text('エラー'),
             content: Text(e.toString()),
           );
         },
       );
     }
-
-    // 画像一覧画面に切り替え
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => PhotoListScreen(),
-      ),
-    );
   }
 
   // 内部で非同期処理(Future)を扱っているのでasyncを付ける
-  // この関数自体も非同期処理となるので返り値もFutureとする
-  Future<void> _onSignUp() async {
-
+  //    - この関数自体も非同期処理となるので返り値もFutureとする
+  Future<void> _onSignUp(BuildContext context) async {
     try {
-      // 入力内容を確認する
       if (_formKey.currentState?.validate() != true) {
-        // エラーメッセージがあるため処理を中断する
         return;
       }
 
       // メールアドレス・パスワードで新規登録
-      // TextEditingControllerから入力内容を取得
-      // Authenticationを使った複雑な処理はライブラリがやってくれる
+      //   TextEditingControllerから入力内容を取得
+      //   Authenticationを使った複雑な処理はライブラリがやってくれる
       final String email = _emailController.text;
       final String password = _passwordController.text;
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
-      // 画像一覧画面に切り替え
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => PhotoListScreen(),
         ),
       );
-      print("新規登録成功");
     } catch (e) {
-      // 失敗したらエラーメッセージを表示
       await showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("エラー"),
+            title: Text('エラー'),
             content: Text(e.toString()),
           );
         },
       );
     }
   }
-
 }

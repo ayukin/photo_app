@@ -11,9 +11,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // アプリ起動前にFirebase初期化処理を入れる
-  // initializeApp()の返り値がFutureなので非同期処理
-  // 非同期処理(Future)はawaitで処理が終わるのを待つことができる
-  // ただし、awaitを使うときは関数にasyncを付ける必要がある
+  //   - initializeApp()の返り値がFutureなので非同期処理
+  //   - 非同期処理(Future)はawaitで処理が終わるのを待つことができる
+  //   - ただし、awaitを使うときは関数にasyncを付ける必要がある
   await Firebase.initializeApp();
 
   runApp(
@@ -25,7 +25,6 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
